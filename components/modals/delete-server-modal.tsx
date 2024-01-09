@@ -8,7 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useRouter } from "next/navigation"
+import qs from "query-string"
+import { useParams, useRouter } from "next/navigation"
 import { useModal } from "@/hooks/use-model-store"
 import { Label } from "../ui/label"
 import { Input } from "../ui/input"
@@ -21,16 +22,23 @@ import axios from "axios"
 export const DeleteServerModal = () => {
   const { isOpen, onClose, type, data } = useModal()
   const isModalOpen = isOpen && type === "deleteServer"
-  const { server } = data
+  const { server, channel } = data
   const router = useRouter()
+  const params = useParams()
   const [isLoading, setIsLoading] = useState(false)
   const onClick = async () => {
     try {
       setIsLoading(true)
-      await axios.delete(`/api/servers/${server?.id}`)
+      const url = qs.stringifyUrl({
+        url: `/api/channels/${channel?.id}`,
+        query: {
+          serverId: params?.serverId,
+        },
+      })
+      await axios.delete(url)
       onClose()
       router.refresh()
-      router.push("/")
+      router.push(`/servers/${params?.serverId}`)
     } catch (error) {
       console.log(error)
     } finally {
@@ -45,10 +53,11 @@ export const DeleteServerModal = () => {
             Delete Server
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
-            Are you sure you want to Delete{" "}
+            Are you sure you want to Delete this? <br />
             <span className="font-semibold text-indigo-500">
-              {server?.name}
-            </span>
+              #{channel?.name}
+            </span>{" "}
+            will be permanently deleted.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="bg-gray-100 px-6 py-4">
